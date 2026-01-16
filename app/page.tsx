@@ -20,6 +20,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState<string | null>(null)
+  const [fileSize, setFileSize] = useState<string | null>(null)
   const [isHovered, setIsHovered] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,16 +28,34 @@ export default function Home() {
     if (!file) return
 
     if (file.size > 1024 * 1024) {
-      setError('File is too large (Max 1MB)')
+      setError(`File is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Max 1MB allowed.`)
       return
     }
 
+    const sizeInKB = (file.size / 1024).toFixed(1)
+    const sizeStr = file.size > 1024 * 1024
+      ? `${(file.size / 1024 / 1024).toFixed(2)}MB`
+      : `${sizeInKB}KB`
+
     setFileName(file.name)
+    setFileSize(sizeStr)
     setError(null)
 
     const reader = new FileReader()
     reader.onload = (ev) => {
-      setFileContent(ev.target?.result as string)
+      try {
+        const result = ev.target?.result as string
+        if (!result || !result.startsWith('data:')) {
+          throw new Error('Failed to read file')
+        }
+        setFileContent(result)
+      } catch (err) {
+        setError('Failed to process file. Please try a different file.')
+        console.error('File read error:', err)
+      }
+    }
+    reader.onerror = () => {
+      setError('Failed to read file. Please try again.')
     }
     reader.readAsDataURL(file)
   }
@@ -86,7 +105,9 @@ export default function Home() {
     setResult(null)
     setText('')
     setFileName(null)
+    setFileSize(null)
     setFileContent(null)
+    setError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -215,6 +236,9 @@ export default function Home() {
                             <FileText className="relative w-12 h-12 text-violet-400 mb-4" />
                           </div>
                           <p className="text-sm text-zinc-200 max-w-[200px] truncate">{fileName}</p>
+                          {fileSize && (
+                            <p className="text-xs text-violet-400/70 mt-1">{fileSize}</p>
+                          )}
                           <p className="text-xs text-zinc-500 mt-2">Click to change</p>
                         </>
                       ) : (

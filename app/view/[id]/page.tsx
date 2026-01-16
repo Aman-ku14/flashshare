@@ -87,14 +87,49 @@ export default async function ViewPage({ params }: PageProps) {
                                 <h2 className="text-2xl font-semibold text-zinc-200 mb-3">Secure File received</h2>
                                 <p className="text-zinc-500 mb-8 text-sm">Download your file immediately.</p>
 
-                                <a
-                                    href={content}
-                                    download="secret-file"
-                                    className="group inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:via-purple-500 hover:to-fuchsia-500 text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
-                                >
-                                    <Download className="w-6 h-6 group-hover:animate-bounce" />
-                                    Download File
-                                </a>
+                                {content.startsWith('data:') ? (
+                                    <div className="space-y-4">
+                                        <div className="max-w-2xl mx-auto">
+                                            {content.startsWith('data:image/') ? (
+                                                <div className="mb-6">
+                                                    <img
+                                                        src={content}
+                                                        alt="Secure image preview"
+                                                        className="max-w-full max-h-[400px] mx-auto rounded-xl border border-zinc-800/50"
+                                                    />
+                                                    <p className="text-xs text-zinc-500 mt-3">Image preview - Download to save</p>
+                                                </div>
+                                            ) : null}
+
+                                            <a
+                                                href={content}
+                                                download={content.match(/data:.*?;name=(.*?);/)?.[1] || 'secret-file'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="group inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:via-purple-500 hover:to-fuchsia-500 text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
+                                            >
+                                                <Download className="w-6 h-6 group-hover:animate-bounce" />
+                                                Download File
+                                            </a>
+                                        </div>
+
+                                        {content.length > 500000 ? (
+                                            <p className="text-xs text-zinc-600 mt-4">
+                                                Large file detected - Click &quot;Download File&quot; button above. If download doesn&apos;t start automatically, right-click and &quot;Save Link As&quot;
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                ) : (
+                                    <div className="text-red-400">
+                                        <p className="mb-4">Error: Invalid file data</p>
+                                        <button
+                                            onClick={() => navigator.clipboard.writeText(content)}
+                                            className="text-xs underline"
+                                        >
+                                            Copy raw data
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
